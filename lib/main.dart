@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemNavigator;
 import 'screens/emergency_confirmation_screen.dart';
 import 'screens/consciousness_check_screen.dart';
 import 'screens/breathing_check_screen.dart';
 import 'screens/emergency_menu_screen.dart';
-import 'screens/placeholder_instructions_screen.dart';
+import 'screens/cpr_guide_screen.dart';
+import 'screens/recovery_position_screen.dart';
 import 'services/emergency_call_service.dart';
 import 'services/call_status.dart';
 import 'widgets/call_status_banner.dart';
@@ -18,6 +20,20 @@ void main() {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
+
+/// Evita empujar la misma pantalla dos veces por un doble toque
+/// accidental (fácil que pase con alguien nervioso pulsando varias
+/// veces seguidas en una emergencia real).
+DateTime? _lastPushAt;
+
+void _pushOnce(Widget screen) {
+  final now = DateTime.now();
+  if (_lastPushAt != null && now.difference(_lastPushAt!) < const Duration(milliseconds: 600)) {
+    return;
+  }
+  _lastPushAt = now;
+  navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => screen));
+}
 
 class PrimerosAuxiliosApp extends StatelessWidget {
   const PrimerosAuxiliosApp({super.key});
@@ -44,9 +60,10 @@ class PrimerosAuxiliosApp extends StatelessWidget {
 
   Future<void> _handleEmergencyConfirmationResult(bool isEmergency) async {
     if (!isEmergency) {
-      debugPrint('El usuario indicó que no hay emergencia.');
-      // Más adelante: aquí cerraremos la app o volveremos
-      // a una pantalla de inicio/prevención.
+      // Cierra la app (Android). En iOS, Apple no permite que una app
+      // se cierre a sí misma por diseño (SystemNavigator.pop() no hace
+      // nada ahí), así que en ese caso simplemente no pasa nada más.
+      SystemNavigator.pop();
       return;
     }
 
@@ -66,32 +83,16 @@ class PrimerosAuxiliosApp extends StatelessWidget {
 
     // 2. Continuar el triaje mientras la llamada está en marcha:
     // preguntar si la víctima está consciente.
-    navigatorKey.currentState?.push(
-      MaterialPageRoute(
-        builder: (_) => ConsciousnessCheckScreen(
-          onResult: _handleConsciousnessResult,
-        ),
-      ),
-    );
+    _pushOnce(ConsciousnessCheckScreen(onResult: _handleConsciousnessResult));
   }
 
   void _handleConsciousnessResult(bool isConscious) {
     if (isConscious) {
       // Consciente: vamos directo al menú de tipos de emergencia.
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (_) => const EmergencyMenuScreen(),
-        ),
-      );
+      _pushOnce(const EmergencyMenuScreen());
     } else {
       // Inconsciente: hace falta comprobar la respiración.
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (_) => BreathingCheckScreen(
-            onResult: _handleBreathingResult,
-          ),
-        ),
-      );
+      _pushOnce(BreathingCheckScreen(onResult: _handleBreathingResult));
     }
   }
 
@@ -99,19 +100,13 @@ class PrimerosAuxiliosApp extends StatelessWidget {
     // Por seguridad, ante la duda ("no lo sé") se trata igual que
     // "no respira": los protocolos oficiales indican actuar como
     // si no hubiera respiración normal para no perder tiempo crítico.
-    final String destinationTitle = switch (status) {
-      BreathingStatus.breathing => 'Posición lateral de seguridad',
-      BreathingStatus.notBreathing => 'RCP (Reanimación cardiopulmonar)',
-      BreathingStatus.unsure => 'RCP (Reanimación cardiopulmonar)',
+    final Widget destination = switch (status) {
+      BreathingStatus.breathing => const RecoveryPositionScreen(),
+      BreathingStatus.notBreathing => const CprGuideScreen(),
+      BreathingStatus.unsure => const CprGuideScreen(),
     };
 
-    navigatorKey.currentState?.push(
-      MaterialPageRoute(
-        builder: (_) => PlaceholderInstructionsScreen(
-          title: destinationTitle,
-        ),
-      ),
-    );
+    _pushOnce(destination);
   }
 
   void _showResultSnackBar(EmergencyCallResult result) {
@@ -124,6 +119,8 @@ class PrimerosAuxiliosApp extends StatelessWidget {
         '⚠️ Permiso de llamada denegado. Ábrelo manualmente.',
       EmergencyCallResult.failed =>
         '❌ No se pudo iniciar la llamada. Inténtalo manualmente.',
+      EmergencyCallResult.simulated =>
+        '🧪 Modo de pruebas: llamada simulada, no se ha marcado ningún número real.',
     };
 
     scaffoldMessengerKey.currentState?.showSnackBar(

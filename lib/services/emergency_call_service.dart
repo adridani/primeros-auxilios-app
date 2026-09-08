@@ -11,6 +11,18 @@ import 'package:url_launcher/url_launcher.dart';
 /// de emergencias mientras se desarrolla y se prueba la app.
 const String kEmergencyPhoneNumber = '600000000';
 
+/// ⚠️ MODO DE PRUEBAS: mientras esto sea `true`, la app NUNCA marca
+/// un número real ni abre el marcador del teléfono (ni siquiera
+/// [kEmergencyPhoneNumber]): se simula el resultado con un pequeño
+/// retraso para poder probar el resto del flujo (el banner de
+/// "llamada en curso", el aviso en pantalla, el triaje que sigue)
+/// sin ningún riesgo de llamar a nadie por accidente.
+///
+/// Ponlo en `false` únicamente cuando quieras probar la llamada real
+/// en un dispositivo físico (y, aun así, [kEmergencyPhoneNumber] sigue
+/// siendo un número de pruebas, no el 112).
+const bool kSimulateEmergencyCall = true;
+
 /// Resultado de intentar realizar la llamada de emergencia,
 /// para que la pantalla pueda mostrar algo si algo falla
 /// (por ejemplo, si el usuario niega el permiso en Android).
@@ -19,6 +31,7 @@ enum EmergencyCallResult {
   dialerOpened, // iOS / fallback: se abrió el marcador con el número puesto.
   permissionDenied, // Android: el usuario no dio permiso de llamada.
   failed, // Cualquier otro error inesperado.
+  simulated, // Modo de pruebas: no se ha marcado ningún número real.
 }
 
 class EmergencyCallService {
@@ -31,6 +44,14 @@ class EmergencyCallService {
   ///     debe dar el último toque para llamar (restricción de Apple,
   ///     no evitable por ninguna app).
   static Future<EmergencyCallResult> callEmergencyNumber() async {
+    // Modo de pruebas activo: no se toca ni el marcador ni el plugin
+    // de llamada directa, así que es imposible que suene un teléfono
+    // real por accidente durante las pruebas.
+    if (kSimulateEmergencyCall) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return EmergencyCallResult.simulated;
+    }
+
     // En web no hay llamadas telefónicas reales; lo dejamos
     // controlado para no romper las pruebas en Chrome.
     if (kIsWeb) {

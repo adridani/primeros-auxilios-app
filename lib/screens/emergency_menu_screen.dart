@@ -50,7 +50,7 @@ class EmergencyMenuScreen extends StatelessWidget {
 }
 
 class _EmergencyTypeButton extends StatelessWidget {
-  final    type;
+  final EmergencyType type;
   final VoidCallback onTap;
 
   const _EmergencyTypeButton({
