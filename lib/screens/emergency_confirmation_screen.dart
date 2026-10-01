@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'prepare_phone_screen.dart';
 
 /// Primera pantalla que ve el usuario al abrir la app.
 ///
@@ -6,7 +7,8 @@ import 'package:flutter/material.dart';
 /// antes de mostrar cualquier otro contenido. Diseñada para alguien
 /// que puede estar en pánico, así que:
 ///   - Sin botón de "atrás" ni forma de cerrar por accidente.
-///   - Solo dos acciones posibles en toda la pantalla.
+///   - Solo dos acciones importantes (más un enlace discreto abajo a
+///     "Prepara tu móvil", para usarlo antes de una emergencia).
 ///   - Textos cortos, botones enormes, alto contraste.
 ///
 /// No navega por sí misma: delega la decisión a través de [onResult],
@@ -82,6 +84,20 @@ class EmergencyConfirmationScreen extends StatelessWidget {
                       height: 64,
                       fontSize: 16,
                       onTap: () => onResult(false),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Enlace discreto: es para usarlo con calma, antes
+                    // de una emergencia, no en mitad de una.
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PreparePhoneScreen()),
+                      ),
+                      icon: const Icon(Icons.settings, color: Colors.white54, size: 18),
+                      label: const Text(
+                        'Prepara tu móvil para una emergencia',
+                        style: TextStyle(color: Colors.white54, fontSize: 14),
+                      ),
                     ),
                   ],
                 ),

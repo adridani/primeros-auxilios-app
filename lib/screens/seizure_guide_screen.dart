@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/guide_step.dart';
 import '../widgets/diagram_box.dart';
+import '../widgets/elapsed_timer.dart';
 import 'guide_sequence_screen.dart';
 import 'waiting_for_help_screen.dart';
 
@@ -25,7 +26,11 @@ class _SeizureGuideScreenState extends State<SeizureGuideScreen> {
   // Sin `late`: así se fija al crear la pantalla. Con `late` se
   // calcularía la primera vez que se lee (al terminar la guía) y el
   // contador de la crisis empezaría tarde.
-  final DateTime _openedAt = DateTime.now();
+  final DateTime _openedAt = ElapsedTimer.now();
+
+  static const Duration _warnAfter = Duration(minutes: 5);
+  static const String _warnText = 'Más de 5 minutos: avisa a emergencias.';
+  static const String _timerLabel = 'Tiempo de convulsión';
 
   static final List<GuideStep> _steps = [
     GuideStep(
@@ -43,7 +48,7 @@ class _SeizureGuideScreenState extends State<SeizureGuideScreen> {
     GuideStep(
       title: 'Controla el tiempo',
       instruction:
-          'La app cuenta el tiempo desde que abriste esta guía. Si la convulsión dura más de 5 minutos, o le da otra seguida, díselo a emergencias.',
+          'Mira el tiempo de arriba: cuenta desde que abriste esta guía. Si la convulsión dura más de 5 minutos, o le da otra seguida, díselo a emergencias.',
       illustrationBuilder: (_) => const IconDiagramBox(icon: Icons.timer, color: _accent),
     ),
     GuideStep(
@@ -61,14 +66,23 @@ class _SeizureGuideScreenState extends State<SeizureGuideScreen> {
       accentColor: _accent,
       steps: _steps,
       finishLabel: 'Hecho',
+      // El contador se ve en todos los pasos, no solo al final: es lo
+      // que hay que vigilar durante toda la crisis.
+      header: ElapsedTimer(
+        start: _openedAt,
+        label: _timerLabel,
+        warnAfter: _warnAfter,
+        warnText: _warnText,
+      ),
       onFinished: () {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => WaitingForHelpScreen(
               accentColor: _accent,
               startedAt: _openedAt,
-              warnAfter: const Duration(minutes: 5),
-              warnText: 'Más de 5 minutos: avisa a emergencias.',
+              timerLabel: _timerLabel,
+              warnAfter: _warnAfter,
+              warnText: _warnText,
               tips: const [
                 'No la sujetes: deja que la convulsión pase y protege su cabeza.',
                 'Fíjate en el tiempo de arriba: si pasa de 5 minutos, avisa a emergencias.',
@@ -76,6 +90,9 @@ class _SeizureGuideScreenState extends State<SeizureGuideScreen> {
               ],
               alarmQuestion: '¿Ha terminado la convulsión?',
               alarmLabel: 'SÍ → Comprobar si respira',
+              noLabel: 'NO, sigue convulsionando',
+              noMessage:
+                  'No la sujetes y protege su cabeza. Mira el tiempo de arriba: si pasa de 5 minutos, avisa a emergencias. Pulsa SÍ cuando termine.',
               onAlarm: WaitingForHelpScreen.checkBreathing,
             ),
           ),

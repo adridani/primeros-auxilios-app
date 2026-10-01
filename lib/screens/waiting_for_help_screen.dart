@@ -1,5 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/voice_guide_service.dart';
+import '../widgets/elapsed_timer.dart';
+import '../widgets/home_button.dart';
 import 'breathing_check_screen.dart';
 
 /// Pantalla final común de las guías del menú de emergencias
@@ -22,6 +24,12 @@ class WaitingForHelpScreen extends StatefulWidget {
   final String alarmQuestion;
   final String alarmLabel;
 
+  /// Botón para responder que NO a [alarmQuestion], y lo que se le
+  /// dice a quien ayuda en ese caso (qué seguir haciendo). Sin esto la
+  /// pregunta solo admitía "sí" y no quedaba claro qué hacer si no.
+  final String noLabel;
+  final String noMessage;
+
   /// Qué hacer al pulsar el botón de alarma. Recibe el [NavigatorState]
   /// (y no un context) porque normalmente esta pantalla se sustituye
   /// por otra y su context deja de ser válido.
@@ -37,16 +45,22 @@ class WaitingForHelpScreen extends StatefulWidget {
   final Duration? warnAfter;
   final String? warnText;
 
+  /// Texto delante del contador ("Tiempo: 02:10").
+  final String timerLabel;
+
   const WaitingForHelpScreen({
     super.key,
     required this.accentColor,
     required this.tips,
     required this.alarmQuestion,
     required this.alarmLabel,
+    required this.noLabel,
+    required this.noMessage,
     required this.onAlarm,
     this.startedAt,
     this.warnAfter,
     this.warnText,
+    this.timerLabel = 'Tiempo',
   });
 
   /// Acción de alarma más habitual: la víctima deja de responder, así
@@ -68,15 +82,83 @@ class WaitingForHelpScreen extends StatefulWidget {
   State<WaitingForHelpScreen> createState() => _WaitingForHelpScreenState();
 }
 
+/// Mensaje destacado tras responder NO a la pregunta de alarma. Lo usa
+/// también [RecoveryMonitoringScreen].
+class NoAnswerMessage extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const NoAnswerMessage({super.key, required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4)),
+    );
+  }
+}
+
+/// Botón para responder NO a la pregunta de alarma. Una vez pulsado se
+/// queda marcado (✓ y borde de color) para que se note que la
+/// respuesta se ha registrado: antes la única reacción era un mensaje
+/// arriba que podía quedar fuera de la vista. Lo usa también
+/// [RecoveryMonitoringScreen].
+class NoAnswerButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback? onPressed;
+
+  const NoAnswerButton({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: selected ? Icon(Icons.check_circle, color: color) : const SizedBox.shrink(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey.shade800,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: selected ? BorderSide(color: color, width: 2) : BorderSide.none,
+          ),
+        ),
+        label: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
 class _WaitingForHelpScreenState extends State<WaitingForHelpScreen> {
   late final DateTime _start;
-  late final Timer _ticker;
-  Duration _elapsed = Duration.zero;
+  final ScrollController _scroll = ScrollController();
 
   /// El botón de alarma queda justo donde estaba el botón "Hecho" de
   /// la guía: sin esto, un doble toque nervioso sobre "Hecho" pulsaba
   /// también la alarma (por ejemplo, "Empezar RCP") sin querer.
   bool _alarmArmed = false;
+
+  /// Se ha respondido NO: se muestra [WaitingForHelpScreen.noMessage].
+  bool _answeredNo = false;
 
   @override
   void initState() {
@@ -84,35 +166,36 @@ class _WaitingForHelpScreenState extends State<WaitingForHelpScreen> {
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) setState(() => _alarmArmed = true);
     });
-    _start = widget.startedAt ?? DateTime.now();
-    _elapsed = DateTime.now().difference(_start);
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _elapsed = DateTime.now().difference(_start));
-    });
+    _start = widget.startedAt ?? ElapsedTimer.now();
   }
 
   @override
   void dispose() {
-    _ticker.cancel();
+    _scroll.dispose();
+    VoiceGuideService.instance.stopSpeaking();
     super.dispose();
   }
 
-  String _formatElapsed(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
+  /// Respuesta NO: marca el botón, sube la lista hasta el mensaje (que
+  /// aparece arriba del todo) y lo lee en voz alta, por si quien ayuda
+  /// tiene las manos ocupadas y no mira la pantalla.
+  void _answerNo() {
+    setState(() => _answeredNo = true);
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+    VoiceGuideService.instance.speak(widget.noMessage);
   }
 
   @override
   Widget build(BuildContext context) {
-    final warning = widget.warnAfter != null && _elapsed >= widget.warnAfter!;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text('Mientras llega la ayuda'),
         automaticallyImplyLeading: false,
+        actions: const [HomeButton()],
       ),
       body: SafeArea(
         child: Padding(
@@ -120,29 +203,26 @@ class _WaitingForHelpScreenState extends State<WaitingForHelpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Tiempo: ${_formatElapsed(_elapsed)}',
-                style: TextStyle(
-                  color: warning ? Colors.redAccent : Colors.white54,
-                  fontSize: warning ? 18 : 14,
-                  fontWeight: warning ? FontWeight.bold : FontWeight.normal,
-                ),
+              ElapsedTimer(
+                start: _start,
+                label: widget.timerLabel,
+                warnAfter: widget.warnAfter,
+                warnText: widget.warnText,
               ),
-              if (warning && widget.warnText != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  widget.warnText!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-              ],
               const SizedBox(height: 16),
               // Los consejos se desplazan; el aviso de alarma queda fijo
               // abajo para que esté siempre a la vista.
               Expanded(
                 child: SingleChildScrollView(
+                  controller: _scroll,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // La respuesta al NO va aquí arriba y no en el
+                      // recuadro de abajo: ese recuadro está siempre
+                      // fijo y, con la letra grande, ya no cabría.
+                      if (_answeredNo)
+                        NoAnswerMessage(text: widget.noMessage, color: widget.accentColor),
                       for (final tip in widget.tips)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 14),
@@ -184,8 +264,8 @@ class _WaitingForHelpScreenState extends State<WaitingForHelpScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: 56,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 56),
                       child: ElevatedButton(
                         onPressed: _alarmArmed ? () => widget.onAlarm(Navigator.of(context)) : null,
                         style: ElevatedButton.styleFrom(
@@ -198,6 +278,13 @@ class _WaitingForHelpScreenState extends State<WaitingForHelpScreen> {
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    NoAnswerButton(
+                      label: widget.noLabel,
+                      selected: _answeredNo,
+                      color: widget.accentColor,
+                      onPressed: _alarmArmed ? _answerNo : null,
                     ),
                   ],
                 ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import '../widgets/diagram_box.dart';
+import '../widgets/home_button.dart';
 import '../widgets/illustrations/cpr_illustrations.dart';
 import 'recovery_position_screen.dart';
 
@@ -163,6 +164,12 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
         backgroundColor: Colors.black,
         title: const Text('RCP en curso'),
         automaticallyImplyLeading: false,
+        actions: const [
+          HomeButton(
+            confirmMessage:
+                'Se dejará de marcar el ritmo de la RCP. Si la víctima sigue sin respirar, no dejes de hacer compresiones.',
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(

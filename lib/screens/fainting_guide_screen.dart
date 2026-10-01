@@ -62,6 +62,8 @@ class FaintingGuideScreen extends StatelessWidget {
               ],
               alarmQuestion: '¿No despierta o ha dejado de responder?',
               alarmLabel: 'SÍ → Comprobar si respira',
+              noLabel: 'NO, ya está despierta',
+              noMessage: 'Bien. Que siga tumbada con las piernas en alto hasta que se encuentre bien. Si se vuelve a desmayar, pulsa SÍ.',
               onAlarm: WaitingForHelpScreen.checkBreathing,
             ),
           ),

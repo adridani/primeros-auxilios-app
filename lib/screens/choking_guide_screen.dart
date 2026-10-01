@@ -69,6 +69,9 @@ class ChokingGuideScreen extends StatelessWidget {
               ],
               alarmQuestion: '¿Ha perdido el conocimiento?',
               alarmLabel: 'SÍ → Empezar RCP',
+              noLabel: 'NO, sigue consciente',
+              noMessage:
+                  'Si aún no ha expulsado el objeto, sigue alternando 5 golpes en la espalda y 5 compresiones abdominales. Si lo expulsa, que la vea un médico.',
               // Atragantado e inconsciente: RCP directamente, sin
               // comprobar la respiración (indicación del ERC).
               onAlarm: (navigator) => navigator.pushReplacement(

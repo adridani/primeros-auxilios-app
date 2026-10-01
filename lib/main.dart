@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemNavigator;
+import 'screens/call_preparation_screen.dart';
 import 'screens/emergency_confirmation_screen.dart';
 import 'screens/consciousness_check_screen.dart';
 import 'screens/breathing_check_screen.dart';
@@ -23,6 +24,10 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 /// accidental (fácil que pase con alguien nervioso pulsando varias
 /// veces seguidas en una emergencia real).
 DateTime? _lastPushAt;
+
+/// Evita que un doble toque en la pantalla previa a la llamada lance
+/// dos llamadas (o una llamada y además "ya ha llamado otra persona").
+bool _leftCallPreparation = false;
 
 void _pushOnce(Widget screen) {
   final now = DateTime.now();
@@ -65,6 +70,37 @@ class PrimerosAuxiliosApp extends StatelessWidget {
       return;
     }
 
+    // Antes de llamar, una pantalla explica qué va a pasar (pulsar
+    // "Llamar" en iPhone, poner el altavoz y volver a la app, que la
+    // llamada no se corta): ni Android ni iOS dejan que la app siga a
+    // la vista durante la llamada.
+    _leftCallPreparation = false;
+    _pushOnce(CallPreparationScreen(
+      onCall: _callAndStartTriage,
+      onSkipCall: _startTriageWithoutCall,
+    ));
+  }
+
+  /// Sustituye la pantalla previa a la llamada por la primera pregunta
+  /// del triaje, para que "atrás" no vuelva a ofrecer llamar.
+  void _replaceWithTriage() {
+    navigatorKey.currentState?.pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => ConsciousnessCheckScreen(onResult: _handleConsciousnessResult),
+      ),
+    );
+  }
+
+  void _startTriageWithoutCall() {
+    if (_leftCallPreparation) return;
+    _leftCallPreparation = true;
+    _replaceWithTriage();
+  }
+
+  Future<void> _callAndStartTriage() async {
+    if (_leftCallPreparation) return;
+    _leftCallPreparation = true;
+
     // 1. Iniciar la llamada de auxilio cuanto antes, y marcar el
     // estado global como "llamada en curso" para que el banner
     // aparezca en cuanto el usuario vuelva a ver la app.
@@ -81,7 +117,7 @@ class PrimerosAuxiliosApp extends StatelessWidget {
 
     // 2. Continuar el triaje mientras la llamada está en marcha:
     // preguntar si la víctima está consciente.
-    _pushOnce(ConsciousnessCheckScreen(onResult: _handleConsciousnessResult));
+    _replaceWithTriage();
   }
 
   void _handleConsciousnessResult(bool isConscious) {

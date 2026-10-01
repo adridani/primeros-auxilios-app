@@ -47,7 +47,12 @@ class _CallActiveBar extends StatelessWidget {
             children: [
               const Icon(Icons.call, color: Colors.white, size: 20),
               const SizedBox(width: 10),
+              // Reparto del ancho 3:2. Antes el botón cogía todo el que
+              // necesitaba y, con la letra del sistema grande en un móvil
+              // estrecho, el texto quedaba en una columna de una palabra
+              // por línea y el banner se comía media pantalla.
               const Expanded(
+                flex: 3,
                 child: Text(
                   'Llamada de emergencia en curso',
                   style: TextStyle(
@@ -56,13 +61,17 @@ class _CallActiveBar extends StatelessWidget {
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: () => callStatusNotifier.markCallEnded(),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.black26,
+              const SizedBox(width: 8),
+              Flexible(
+                flex: 2,
+                child: TextButton(
+                  onPressed: () => callStatusNotifier.markCallEnded(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.black26,
+                  ),
+                  child: const Text('Ha terminado', textAlign: TextAlign.center),
                 ),
-                child: const Text('Ha terminado'),
               ),
             ],
           ),

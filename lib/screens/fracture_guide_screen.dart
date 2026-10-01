@@ -63,6 +63,8 @@ class FractureGuideScreen extends StatelessWidget {
               ],
               alarmQuestion: '¿Sangra mucho?',
               alarmLabel: 'SÍ → Guía de hemorragia',
+              noLabel: 'NO',
+              noMessage: 'Bien. Mantén la zona inmovilizada y vigila si empieza a sangrar. Si sangra mucho, pulsa SÍ.',
               onAlarm: (navigator) => navigator.pushReplacement(
                 MaterialPageRoute(builder: (_) => const BleedingGuideScreen()),
               ),

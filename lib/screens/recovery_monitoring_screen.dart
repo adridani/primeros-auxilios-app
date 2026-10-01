@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../widgets/diagram_box.dart';
 import '../widgets/illustrations/recovery_position_illustrations.dart';
 import 'cpr_guide_screen.dart';
+import '../services/voice_guide_service.dart';
+import '../widgets/home_button.dart';
+import 'waiting_for_help_screen.dart' show NoAnswerButton, NoAnswerMessage;
 
 /// Pantalla final tras colocar a la víctima en posición lateral de
 /// seguridad: hay que vigilar su respiración de forma continua hasta
@@ -25,6 +28,9 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
   /// ese botón empezaba la RCP sin querer.
   bool _alarmArmed = false;
 
+  /// Se ha respondido NO (sigue respirando): se muestra qué seguir haciendo.
+  bool _answeredNo = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +47,24 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
   void dispose() {
     _ticker.cancel();
     _stopwatch.stop();
+    _scroll.dispose();
+    VoiceGuideService.instance.stopSpeaking();
     super.dispose();
+  }
+
+  final ScrollController _scroll = ScrollController();
+
+  static const String _noMessage =
+      'Bien. Sigue vigilando y comprueba su respiración cada minuto. Si deja de respirar con normalidad, pulsa SÍ.';
+
+  /// Igual que en [WaitingForHelpScreen]: marca el botón, sube hasta el
+  /// mensaje y lo lee en voz alta.
+  void _answerNo() {
+    setState(() => _answeredNo = true);
+    if (_scroll.hasClients) {
+      _scroll.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+    }
+    VoiceGuideService.instance.speak(_noMessage);
   }
 
   String _formatElapsed(Duration d) {
@@ -64,6 +87,7 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
         backgroundColor: Colors.black,
         title: const Text('Vigilando a la víctima'),
         automaticallyImplyLeading: false,
+        actions: const [HomeButton()],
       ),
       body: SafeArea(
         child: Padding(
@@ -81,9 +105,11 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
               // vista, también en móviles pequeños (antes se desbordaba).
               Expanded(
                 child: SingleChildScrollView(
+                  controller: _scroll,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (_answeredNo) const NoAnswerMessage(text: _noMessage, color: Colors.orange),
                       DiagramBox(painter: FinalRecoveryPositionPainter()),
                       const SizedBox(height: 20),
                       const Text(
@@ -116,8 +142,8 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: 56,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 56),
                       child: ElevatedButton(
                         onPressed: _alarmArmed ? _breathingStopped : null,
                         style: ElevatedButton.styleFrom(
@@ -130,6 +156,13 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
                           style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    NoAnswerButton(
+                      label: 'NO, respira con normalidad',
+                      selected: _answeredNo,
+                      color: Colors.orange,
+                      onPressed: _alarmArmed ? _answerNo : null,
                     ),
                   ],
                 ),

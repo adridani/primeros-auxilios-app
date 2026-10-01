@@ -70,6 +70,8 @@ class BleedingGuideScreen extends StatelessWidget {
               ],
               alarmQuestion: '¿Ha dejado de responder?',
               alarmLabel: 'SÍ → Comprobar si respira',
+              noLabel: 'NO, sigue respondiendo',
+              noMessage: 'Bien. Sigue apretando la herida sin soltar y vigílala. Si deja de responder, pulsa SÍ.',
               onAlarm: WaitingForHelpScreen.checkBreathing,
             ),
           ),

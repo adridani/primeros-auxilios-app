@@ -62,6 +62,8 @@ class BurnGuideScreen extends StatelessWidget {
               ],
               alarmQuestion: '¿Ha dejado de responder?',
               alarmLabel: 'SÍ → Comprobar si respira',
+              noLabel: 'NO, sigue respondiendo',
+              noMessage: 'Bien. Sigue enfriando la quemadura con agua hasta completar 20 minutos. Si deja de responder, pulsa SÍ.',
               onAlarm: WaitingForHelpScreen.checkBreathing,
             ),
           ),
