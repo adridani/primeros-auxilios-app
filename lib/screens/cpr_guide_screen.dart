@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/guide_step.dart';
 import '../widgets/diagram_box.dart';
-import '../widgets/illustrations/cpr_illustrations.dart';
 import 'cpr_compression_screen.dart';
 import 'guide_sequence_screen.dart';
 
@@ -18,13 +17,15 @@ class CprGuideScreen extends StatelessWidget {
       title: 'Túmbala boca arriba',
       instruction:
           'Coloca a la víctima boca arriba sobre una superficie plana y dura (el suelo, no una cama).',
-      illustrationBuilder: (_) => DiagramBox(painter: LyingFlatPainter()),
+      illustrationBuilder: (_) =>
+          const PhotoDiagramBox(assetPath: 'assets/images/cpr_lying_supine.jpg'),
     ),
     GuideStep(
       title: 'Arrodíllate a su lado',
       instruction:
           'Ponte de rodillas junto a su pecho, para poder empujar hacia abajo con los brazos rectos.',
-      illustrationBuilder: (_) => DiagramBox(painter: KneelingBesidePainter()),
+      illustrationBuilder: (_) =>
+          const PhotoDiagramBox(assetPath: 'assets/images/cpr_kneeling_beside.jpg'),
     ),
     GuideStep(
       title: 'Coloca las manos',

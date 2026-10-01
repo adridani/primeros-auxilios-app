@@ -25,9 +25,8 @@ class EmergencyType {
 /// de arriba a abajo y alguien en pánico tiende a elegir de los
 /// primeros que ve.
 ///
-/// Añadir un nuevo tipo de emergencia en el futuro es tan simple
-/// como agregar una entrada más aquí; la pantalla de menú no
-/// necesita cambios.
+/// Para añadir un nuevo tipo de emergencia hay que agregar una
+/// entrada aquí y su guía en `_guideFor` (emergency_menu_screen.dart).
 const List<EmergencyType> emergencyTypes = [
   EmergencyType(
     id: 'cpr',
@@ -48,8 +47,11 @@ const List<EmergencyType> emergencyTypes = [
     color: Colors.deepOrange,
   ),
   EmergencyType(
-    id: 'unconsciousness',
-    label: 'Pérdida de conciencia',
+    // Este menú solo se ve con la víctima consciente: cubre a quien se
+    // marea o se ha desmayado y vuelve en sí. Si está inconsciente, el
+    // triaje ya lleva a comprobar la respiración.
+    id: 'fainting',
+    label: 'Desmayo o mareo',
     icon: Icons.self_improvement,
     color: Colors.orange,
   ),

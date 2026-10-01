@@ -85,6 +85,31 @@ class PhotoDiagramBox extends StatelessWidget {
   }
 }
 
+/// Recuadro con un icono grande, para los pasos en los que no hay una
+/// imagen libre que lo explique bien. Mismo tamaño y estilo que
+/// [DiagramBox] para que las guías se vean coherentes.
+class IconDiagramBox extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+
+  const IconDiagramBox({super.key, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 160,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, color: color, size: 96),
+    );
+  }
+}
+
 class _FullScreenImage extends StatelessWidget {
   final String assetPath;
 

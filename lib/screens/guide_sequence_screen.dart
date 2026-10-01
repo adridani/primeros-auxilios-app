@@ -157,13 +157,17 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Builder(builder: step.illustrationBuilder),
-              const SizedBox(height: 24),
+              // La ilustración va DENTRO del scroll (no fija encima):
+              // algunas son altas (la de la PLS mide 260 + dos líneas de
+              // texto) y en móviles pequeños o con la letra del sistema
+              // grande no cabían junto al botón, que se desbordaba.
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Builder(builder: step.illustrationBuilder),
+                      const SizedBox(height: 24),
                       Text(
                         step.title,
                         style: const TextStyle(

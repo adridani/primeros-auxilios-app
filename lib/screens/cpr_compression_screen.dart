@@ -36,6 +36,12 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
   int _compressionCount = 0;
   int _cycleCount = 0;
   late final AnimationController _pulseController;
+
+  /// Posición de las manos en el dibujo (1 = abajo del todo, 0 =
+  /// arriba). Arranca abajo en cada pitido, sube y vuelve a bajar
+  /// justo al siguiente: así el dibujo, el círculo y el sonido van
+  /// siempre a la vez.
+  late final Animation<double> _pulse;
   Timer? _compressionTimer;
   late final Stopwatch _stopwatch;
   late final Timer _elapsedTicker;
@@ -55,12 +61,16 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
   @override
   void initState() {
     super.initState();
-    // Medio período por dirección (bajar / subir) para que un ciclo
-    // completo del pulso dure exactamente un latido (545 ms ≈ 110/min).
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: _beatPeriod ~/ 2,
-    )..repeat(reverse: true);
+    // La animación NO va por libre: dura exactamente un latido y el
+    // propio temporizador de las compresiones la relanza en cada
+    // pitido. Con dos relojes independientes (antes el dibujo se
+    // repetía solo) se desacompasaban, sobre todo al volver de las
+    // insuflaciones, y el pitido podía sonar con las manos arriba.
+    _pulseController = AnimationController(vsync: this, duration: _beatPeriod);
+    _pulse = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 1),
+    ]).animate(_pulseController);
     _startCompressionTimer();
     _stopwatch = Stopwatch()..start();
     _elapsedTicker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -85,6 +95,7 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
     _compressionTimer?.cancel();
     _compressionTimer = Timer.periodic(_beatPeriod, (_) {
       _playBeep();
+      _pulseController.forward(from: 0);
       setState(() {
         _compressionCount += 1;
         if (_compressionCount >= _compressionsPerCycle) {
@@ -99,8 +110,15 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
   /// plugin no cargado todavía, dispositivo raro...) nunca debe
   /// interrumpir el conteo ni el resto de la guía.
   Future<void> _playBeep() async {
+    final player = AudioPlayer();
+    // El pitido dura una fracción de segundo; se libera el reproductor
+    // poco después. Sin esto se acumulaban ~110 reproductores por
+    // minuto sin cerrar, y en una RCP larga el sonido podía dejar de
+    // funcionar al agotarse los recursos de audio del sistema.
+    // (En modo lowLatency no hay evento fiable de "ha terminado", por
+    // eso se usa un retraso fijo en vez de esperar a que acabe.)
+    Future.delayed(const Duration(seconds: 2), () => player.dispose());
     try {
-      final player = AudioPlayer();
       await player.play(
         AssetSource('audio/compression_beep.wav'),
         mode: PlayerMode.lowLatency,
@@ -152,8 +170,12 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Wrap en vez de Row: en pantallas estrechas el aviso del
+              // DESA baja a una segunda línea en vez de salirse.
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 4,
                 children: [
                   Text(
                     'Ciclo ${_cycleCount + 1} · Tiempo: ${_formatElapsed(_elapsed)}',
@@ -171,7 +193,7 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
                     ? _CompressionsPhase(
                         count: _compressionCount,
                         target: _compressionsPerCycle,
-                        pulseController: _pulseController,
+                        pulse: _pulse,
                         audioError: _audioError,
                       )
                     : _BreathsPhase(onDone: _onBreathsDone),
@@ -189,13 +211,13 @@ class _CprCompressionScreenState extends State<CprCompressionScreen>
 class _CompressionsPhase extends StatelessWidget {
   final int count;
   final int target;
-  final AnimationController pulseController;
+  final Animation<double> pulse;
   final String? audioError;
 
   const _CompressionsPhase({
     required this.count,
     required this.target,
-    required this.pulseController,
+    required this.pulse,
     this.audioError,
   });
 
@@ -223,9 +245,9 @@ class _CompressionsPhase extends StatelessWidget {
               ),
             ),
           AnimatedBuilder(
-            animation: pulseController,
+            animation: pulse,
             builder: (context, _) {
-              return DiagramBox(painter: CompressionMotionPainter(progress: pulseController.value));
+              return DiagramBox(painter: CompressionMotionPainter(progress: pulse.value));
             },
           ),
           const SizedBox(height: 12),
@@ -241,9 +263,9 @@ class _CompressionsPhase extends StatelessWidget {
           const SizedBox(height: 28),
           Center(
             child: AnimatedBuilder(
-              animation: pulseController,
+              animation: pulse,
               builder: (context, child) {
-                final scale = 1.0 + (pulseController.value * 0.08);
+                final scale = 1.0 + (pulse.value * 0.08);
                 return Transform.scale(scale: scale, child: child);
               },
               child: Container(
@@ -299,7 +321,7 @@ class _BreathsPhase extends StatelessWidget {
                   style: TextStyle(color: Colors.white70, fontSize: 15, height: 1.4),
                 ),
                 const SizedBox(height: 16),
-                DiagramBox(painter: RescueBreathPainter()),
+                const PhotoDiagramBox(assetPath: 'assets/images/cpr_rescue_breath.jpg'),
                 const SizedBox(height: 8),
                 const Text(
                   '2. Pinza la nariz, sella tu boca sobre la suya y sopla hasta que el pecho suba. Repite una vez más.',

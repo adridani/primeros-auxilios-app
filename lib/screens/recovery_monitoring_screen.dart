@@ -20,9 +20,17 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
   late final Timer _ticker;
   Duration _elapsed = Duration.zero;
 
+  /// El botón de "Empezar RCP" queda justo donde estaba "Ya está
+  /// colocada" en la pantalla anterior: sin esto, un doble toque sobre
+  /// ese botón empezaba la RCP sin querer.
+  bool _alarmArmed = false;
+
   @override
   void initState() {
     super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) setState(() => _alarmArmed = true);
+    });
     _stopwatch = Stopwatch()..start();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() => _elapsed = _stopwatch.elapsed);
@@ -68,18 +76,30 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
                 style: const TextStyle(color: Colors.white54, fontSize: 14),
               ),
               const SizedBox(height: 16),
-              DiagramBox(painter: FinalRecoveryPositionPainter()),
-              const SizedBox(height: 20),
-              const Text(
-                'Mantenla en esta posición y vigila que respire con normalidad hasta que llegue la ayuda.',
-                style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.4),
+              // El dibujo y el texto se desplazan; el aviso de "ha dejado
+              // de respirar" queda fijo abajo para que esté siempre a la
+              // vista, también en móviles pequeños (antes se desbordaba).
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DiagramBox(painter: FinalRecoveryPositionPainter()),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Mantenla en esta posición y vigila que respire con normalidad hasta que llegue la ayuda.',
+                        style: TextStyle(color: Colors.white70, fontSize: 17, height: 1.4),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Comprueba su respiración cada minuto, acercando tu oído a su boca y observando el pecho.',
+                        style: TextStyle(color: Colors.white38, fontSize: 14, fontStyle: FontStyle.italic),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Comprueba su respiración cada minuto, acercando tu oído a su boca y observando el pecho.',
-                style: TextStyle(color: Colors.white38, fontSize: 14, fontStyle: FontStyle.italic),
-              ),
-              const Spacer(),
+              const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -99,7 +119,7 @@ class _RecoveryMonitoringScreenState extends State<RecoveryMonitoringScreen> {
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _breathingStopped,
+                        onPressed: _alarmArmed ? _breathingStopped : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

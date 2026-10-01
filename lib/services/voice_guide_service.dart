@@ -1,6 +1,7 @@
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:volume_controller/volume_controller.dart';
 
 /// Lee instrucciones en voz alta y escucha el comando "siguiente"
 /// para poder avanzar de paso con las manos ocupadas (justo el caso
@@ -21,6 +22,7 @@ class VoiceGuideService {
   final stt.SpeechToText _speech = stt.SpeechToText();
 
   bool _ttsReady = false;
+  bool _volumeRaised = false;
   bool _sttInitialized = false;
   bool _sttAvailable = false;
 
@@ -38,16 +40,36 @@ class VoiceGuideService {
       await _tts.setLanguage('es-ES');
       await _tts.setSpeechRate(0.48);
       await _tts.setPitch(1.0);
+      await _tts.setVolume(1.0);
       _ttsReady = true;
     } catch (_) {
       // Sin voz disponible: speak() simplemente no dirá nada.
     }
   }
 
+  /// Sube el volumen del sistema al máximo (y quita el silencio) la
+  /// primera vez que la app va a hablar, para que las instrucciones
+  /// se oigan aunque el móvil estuviera bajo o en silencio.
+  ///
+  /// Solo se hace una vez: si después el usuario baja el volumen a
+  /// propósito, no se lo volvemos a subir en cada instrucción. En web
+  /// (y donde el plugin no esté disponible) falla en silencio.
+  Future<void> _raiseVolumeOnce() async {
+    if (_volumeRaised) return;
+    _volumeRaised = true;
+    try {
+      await VolumeController.instance.setMute(false);
+    } catch (_) {}
+    try {
+      await VolumeController.instance.setVolume(1.0);
+    } catch (_) {}
+  }
+
   /// Lee [text] en voz alta y espera a que termine (o falle).
   Future<void> speak(String text) async {
     await _ensureTtsReady();
     if (!_ttsReady) return;
+    await _raiseVolumeOnce();
     try {
       await _tts.stop();
       await _tts.awaitSpeakCompletion(true);

@@ -4,8 +4,6 @@ import 'screens/emergency_confirmation_screen.dart';
 import 'screens/consciousness_check_screen.dart';
 import 'screens/breathing_check_screen.dart';
 import 'screens/emergency_menu_screen.dart';
-import 'screens/cpr_guide_screen.dart';
-import 'screens/recovery_position_screen.dart';
 import 'services/emergency_call_service.dart';
 import 'services/call_status.dart';
 import 'widgets/call_status_banner.dart';
@@ -97,16 +95,7 @@ class PrimerosAuxiliosApp extends StatelessWidget {
   }
 
   void _handleBreathingResult(BreathingStatus status) {
-    // Por seguridad, ante la duda ("no lo sé") se trata igual que
-    // "no respira": los protocolos oficiales indican actuar como
-    // si no hubiera respiración normal para no perder tiempo crítico.
-    final Widget destination = switch (status) {
-      BreathingStatus.breathing => const RecoveryPositionScreen(),
-      BreathingStatus.notBreathing => const CprGuideScreen(),
-      BreathingStatus.unsure => const CprGuideScreen(),
-    };
-
-    _pushOnce(destination);
+    _pushOnce(destinationForBreathing(status));
   }
 
   void _showResultSnackBar(EmergencyCallResult result) {
