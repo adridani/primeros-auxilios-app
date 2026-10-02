@@ -28,49 +28,55 @@ class ConsciousnessCheckScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(
-                Icons.person_search,
-                color: Colors.orangeAccent,
-                size: 72,
+        // Centrado y con scroll: en móviles pequeños o con la letra
+        // del sistema grande, los botones no cabían y se desbordaban.
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.person_search,
+                    color: Colors.orangeAccent,
+                    size: 72,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '¿Está consciente?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Háblale fuerte y agítale suavemente por los hombros.\n¿Responde de alguna forma?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _TriageButton(
+                    label: 'SÍ, responde',
+                    color: Colors.green,
+                    onTap: () => onResult(true),
+                  ),
+                  const SizedBox(height: 20),
+                  _TriageButton(
+                    label: 'NO responde',
+                    color: Colors.red,
+                    onTap: () => onResult(false),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                '¿Está consciente?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Háblale fuerte y agítale suavemente por los hombros.\n¿Responde de alguna forma?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 48),
-              _TriageButton(
-                label: 'SÍ, responde',
-                color: Colors.green,
-                onTap: () => onResult(true),
-              ),
-              const SizedBox(height: 20),
-              _TriageButton(
-                label: 'NO responde',
-                color: Colors.red,
-                onTap: () => onResult(false),
-              ),
-            ],
+            ),
           ),
         ),
       ),

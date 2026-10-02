@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>La app usa el micrófono para escuchar cuando dices "siguiente" y avanzar de paso sin tener que tocar la pantalla durante una emergencia.</string>
+	<string>La app usa el micrófono para escuchar cuando dices "siguiente" o "repite" y avanzar o volver a oír un paso sin tener que tocar la pantalla durante una emergencia.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>La app reconoce comandos de voz como "siguiente" para poder guiarte con las manos ocupadas durante una emergencia.</string>
+	<string>La app reconoce comandos de voz como "siguiente" o "repite" para poder guiarte con las manos ocupadas durante una emergencia.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

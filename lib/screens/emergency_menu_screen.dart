@@ -1,6 +1,29 @@
 import 'package:flutter/material.dart';
 import '../models/emergency_type.dart';
-import 'placeholder_instructions_screen.dart';
+import 'bleeding_guide_screen.dart';
+import 'burn_guide_screen.dart';
+import 'choking_guide_screen.dart';
+import 'cpr_guide_screen.dart';
+import 'fainting_guide_screen.dart';
+import 'fracture_guide_screen.dart';
+import 'seizure_guide_screen.dart';
+
+/// Pantalla de instrucciones de cada tipo de emergencia, según su
+/// [EmergencyType.id]. Al añadir un tipo nuevo en emergency_type.dart
+/// hay que añadir aquí su guía: el compilador NO avisa si falta (el id
+/// es un texto), solo fallaría al pulsar el botón.
+Widget _guideFor(EmergencyType type) {
+  return switch (type.id) {
+    'cpr' => const CprGuideScreen(),
+    'severe_bleeding' => const BleedingGuideScreen(),
+    'choking' => const ChokingGuideScreen(),
+    'fainting' => const FaintingGuideScreen(),
+    'burn' => const BurnGuideScreen(),
+    'seizure' => const SeizureGuideScreen(),
+    'fracture' => const FractureGuideScreen(),
+    _ => throw ArgumentError('Tipo de emergencia sin guía: ${type.id}'),
+  };
+}
 
 /// Se muestra cuando la víctima está CONSCIENTE: en ese caso no
 /// tiene sentido preguntar por la respiración con el flujo de
@@ -9,9 +32,8 @@ import 'placeholder_instructions_screen.dart';
 /// viendo (hemorragia, atragantamiento, quemadura, etc.).
 ///
 /// Recorre la lista [emergencyTypes] (definida en
-/// models/emergency_type.dart) para generar los botones, así que
-/// añadir un nuevo tipo de emergencia en el futuro no requiere
-/// tocar este archivo.
+/// models/emergency_type.dart) para generar los botones; cada botón
+/// abre la guía que indica [_guideFor].
 class EmergencyMenuScreen extends StatelessWidget {
   const EmergencyMenuScreen({super.key});
 
@@ -34,11 +56,7 @@ class EmergencyMenuScreen extends StatelessWidget {
               type: type,
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => PlaceholderInstructionsScreen(
-                      title: type.label,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (_) => _guideFor(type)),
                 );
               },
             );
@@ -60,8 +78,10 @@ class _EmergencyTypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 72,
+    // Altura mínima (no fija) para que el botón crezca si el texto
+    // ocupa dos líneas.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 72),
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
@@ -77,12 +97,17 @@ class _EmergencyTypeButton extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(type.icon, color: Colors.white, size: 32),
             const SizedBox(width: 16),
-            Text(
-              type.label,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            // Expanded: con la letra del sistema grande, las etiquetas
+            // largas ("Fractura o esguince") pasan a dos líneas en vez
+            // de salirse del botón.
+            Expanded(
+              child: Text(
+                type.label,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],

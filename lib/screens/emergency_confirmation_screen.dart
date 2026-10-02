@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'prepare_phone_screen.dart';
 
 /// Primera pantalla que ve el usuario al abrir la app.
 ///
@@ -6,7 +7,8 @@ import 'package:flutter/material.dart';
 /// antes de mostrar cualquier otro contenido. Diseñada para alguien
 /// que puede estar en pánico, así que:
 ///   - Sin botón de "atrás" ni forma de cerrar por accidente.
-///   - Solo dos acciones posibles en toda la pantalla.
+///   - Solo dos acciones importantes (más un enlace discreto abajo a
+///     "Prepara tu móvil", para usarlo antes de una emergencia).
 ///   - Textos cortos, botones enormes, alto contraste.
 ///
 /// No navega por sí misma: delega la decisión a través de [onResult],
@@ -29,57 +31,77 @@ class EmergencyConfirmationScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Icon(
-                  Icons.warning_rounded,
-                  color: Colors.redAccent,
-                  size: 72,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  '¿Es esta una emergencia real?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Vas a recibir instrucciones para actuar de inmediato.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 48),
+          // Centrado y con scroll: en móviles pequeños o con la letra
+          // del sistema grande, los botones no cabían y se desbordaban.
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Icon(
+                      Icons.warning_rounded,
+                      color: Colors.redAccent,
+                      size: 72,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '¿Es esta una emergencia real?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Vas a recibir instrucciones para actuar de inmediato.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+    
+                    // Botón "SÍ": dominante, es el camino esperado.
+                    _EmergencyButton(
+                      label: 'SÍ, es una emergencia',
+                      color: Colors.red,
+                      height: 120,
+                      fontSize: 24,
+                      onTap: () => onResult(true),
+                    ),
+                    const SizedBox(height: 20),
+    
+                    // Botón "No": secundario, neutro, más pequeño.
+                    _EmergencyButton(
+                      label: 'No, salir',
+                      color: Colors.grey.shade800,
+                      height: 64,
+                      fontSize: 16,
+                      onTap: () => onResult(false),
+                    ),
+                    const SizedBox(height: 24),
 
-                // Botón "SÍ": dominante, es el camino esperado.
-                _EmergencyButton(
-                  label: 'SÍ, es una emergencia',
-                  color: Colors.red,
-                  height: 120,
-                  fontSize: 24,
-                  onTap: () => onResult(true),
+                    // Enlace discreto: es para usarlo con calma, antes
+                    // de una emergencia, no en mitad de una.
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PreparePhoneScreen()),
+                      ),
+                      icon: const Icon(Icons.settings, color: Colors.white54, size: 18),
+                      label: const Text(
+                        'Prepara tu móvil para una emergencia',
+                        style: TextStyle(color: Colors.white54, fontSize: 14),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-
-                // Botón "No": secundario, neutro, más pequeño.
-                _EmergencyButton(
-                  label: 'No, salir',
-                  color: Colors.grey.shade800,
-                  height: 64,
-                  fontSize: 16,
-                  onTap: () => onResult(false),
-                ),
-              ],
+              ),
             ),
           ),
         ),

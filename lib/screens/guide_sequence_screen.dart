@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../models/guide_step.dart';
 import '../services/voice_guide_service.dart';
+import '../widgets/home_button.dart';
 
 /// Muestra una lista de [GuideStep] de una en una, con botones grandes
 /// de "Anterior"/"Siguiente" y un indicador de progreso ("Paso X de Y").
 ///
 /// Cada paso se lee en voz alta al entrar y, al terminar, la app
 /// escucha unos segundos por si el usuario dice "siguiente" (o algún
-/// sinónimo) para avanzar sin tener que tocar la pantalla — pensado
+/// sinónimo) para avanzar, o "repite" para volver a oírlo, sin tener
+/// que tocar la pantalla — pensado
 /// para cuando tiene las manos ocupadas sujetando a la víctima. El
 /// botón manual sigue funcionando exactamente igual en todo momento,
 /// por si la voz falla o el usuario prefiere tocar.
@@ -24,6 +26,10 @@ class GuideSequenceScreen extends StatefulWidget {
   final String finishLabel;
   final VoidCallback onFinished;
 
+  /// Algo que se muestra fijo arriba en todos los pasos (por ejemplo,
+  /// el contador de tiempo de la guía de convulsiones).
+  final Widget? header;
+
   const GuideSequenceScreen({
     super.key,
     required this.appBarTitle,
@@ -31,6 +37,7 @@ class GuideSequenceScreen extends StatefulWidget {
     required this.onFinished,
     this.accentColor = Colors.red,
     this.finishLabel = 'Siguiente',
+    this.header,
   });
 
   @override
@@ -75,10 +82,20 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
       _speaking = false;
       _listening = true;
     });
-    final matched = await VoiceGuideService.instance.listenForNext();
-    if (!mounted) return;
+    final stepWhenListening = _safeIndex;
+    final command = await VoiceGuideService.instance.listenForCommand();
+    // Si mientras tanto se ha cambiado de paso con los botones, esta
+    // escucha ya no vale: la del paso nuevo se encarga.
+    if (!mounted || _safeIndex != stepWhenListening) return;
     setState(() => _listening = false);
-    if (matched) _advance();
+    switch (command) {
+      case VoiceCommand.next:
+        _advance();
+      case VoiceCommand.repeat:
+        _narrateAndListen();
+      case VoiceCommand.none:
+        break;
+    }
   }
 
   void _goBack() {
@@ -131,6 +148,7 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(widget.appBarTitle),
+        actions: const [HomeButton()],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: _goBack,
@@ -142,6 +160,10 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (widget.header != null) ...[
+                widget.header!,
+                const SizedBox(height: 12),
+              ],
               Text(
                 'Paso ${_safeIndex + 1} de ${widget.steps.length}',
                 style: const TextStyle(color: Colors.white54, fontSize: 14),
@@ -157,13 +179,17 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Builder(builder: step.illustrationBuilder),
-              const SizedBox(height: 24),
+              // La ilustración va DENTRO del scroll (no fija encima):
+              // algunas son altas (la de la PLS mide 260 + dos líneas de
+              // texto) y en móviles pequeños o con la letra del sistema
+              // grande no cabían junto al botón, que se desbordaba.
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Builder(builder: step.illustrationBuilder),
+                      const SizedBox(height: 24),
                       Text(
                         step.title,
                         style: const TextStyle(
@@ -209,7 +235,7 @@ class _GuideSequenceScreenState extends State<GuideSequenceScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _listening ? 'Escuchando… di "siguiente"' : 'Leyendo…',
+                        _listening ? 'Escuchando… di "siguiente" o "repite"' : 'Leyendo…',
                         style: TextStyle(
                           color: widget.accentColor,
                           fontSize: 13,
