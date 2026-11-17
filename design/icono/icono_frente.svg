@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Capa delantera del icono adaptativo de Android: el lienzo
+       representa los 108 dp de la capa y el dibujo cabe en el círculo
+       seguro central de 66 dp (radio 313 en este lienzo). -->
+  <path d="M512 770 C 330 655 250 560 250 450 C 250 355 322 290 405 290 C 457 290 492 318 512 352 C 532 318 567 290 619 290 C 702 290 774 355 774 450 C 774 560 694 655 512 770 Z" fill="#FFFFFF"/>
+  <polyline points="282,505 418,505 452,438 500,590 548,392 588,505 742,505" fill="none" stroke="#D32F2F" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

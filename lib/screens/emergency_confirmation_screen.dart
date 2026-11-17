@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'about_screen.dart';
 import 'prepare_phone_screen.dart';
 
 /// Primera pantalla que ve el usuario al abrir la app.
@@ -97,6 +98,16 @@ class EmergencyConfirmationScreen extends StatelessWidget {
                       label: const Text(
                         'Prepara tu móvil para una emergencia',
                         style: TextStyle(color: Colors.white54, fontSize: 14),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AboutScreen()),
+                      ),
+                      child: const Text(
+                        'Guía orientativa: no sustituye al 112.\nAviso y créditos',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                     ),
                   ],

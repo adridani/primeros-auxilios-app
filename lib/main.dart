@@ -44,7 +44,9 @@ class PrimerosAuxiliosApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Primeros Auxilios',
+      // El mismo nombre que bajo el icono: es el que sale en la lista
+      // de apps abiertas de Android.
+      title: 'Auxilio',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       navigatorKey: navigatorKey,

@@ -169,9 +169,25 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Prepara tu móvil para una emergencia'));
     await tester.pumpAndSettle();
-    expect(find.text('Altavoz automático en las llamadas'), findsOneWidget);
+    expect(find.text('Ten la app a mano'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Altavoz automático en las llamadas'), 200);
     await tester.scrollUntilVisible(find.text('Probar la voz'), 200);
     expect(find.text('Probar la voz'), findsOneWidget);
+    await finish(tester);
+  });
+
+  testWidgets('"Aviso y créditos" se abre desde el inicio y cita las imágenes', (tester) async {
+    useSmallPhone(tester);
+    await tester.pumpWidget(const PrimerosAuxiliosApp());
+    final link = find.textContaining('Aviso y créditos');
+    await tester.ensureVisible(link);
+    await tester.pumpAndSettle();
+    await tester.tap(link);
+    await tester.pumpAndSettle();
+    expect(find.text('Aviso importante'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Insuflaciones'), 200);
+    await tester.scrollUntilVisible(find.text('Licencias del software'), 200);
+    expect(find.text('Licencias del software'), findsOneWidget);
     await finish(tester);
   });
 
