@@ -1,17 +1,24 @@
-# primeros_auxilios_app
+# Auxilio · Primeros Auxilios
 
-A new Flutter project.
+App de Flutter que guía paso a paso, con voz, en una emergencia: triaje
+(¿responde?, ¿respira?), llamada al 112, RCP con metrónomo, posición
+lateral de seguridad y guías para hemorragia, atragantamiento, desmayo,
+quemadura, convulsión y fractura.
 
-## Getting Started
+- Identificador: `com.adridani.primerosauxilios`
+- Nombre bajo el icono: **Auxilio** · Nombre en la tienda: **Primeros Auxilios: Guía SOS**
+- Diseños del icono: `design/icono/`
+- Créditos de las imágenes: `assets/images/CREDITS.md`
 
-This project is a starting point for a Flutter application.
+## Antes de publicar
 
-A few resources to get you started if this is your first Flutter project:
+- Revisión del contenido por personal de emergencias.
+- En `lib/services/emergency_call_service.dart`: poner el número 112 y
+  `kSimulateEmergencyCall = false`.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Desarrollo
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter test
+flutter run
+```

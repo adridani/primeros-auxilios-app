@@ -54,6 +54,12 @@ class _PreparePhoneScreenState extends State<PreparePhoneScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final homeScreenSteps = <String>[
+      if (_isIOS || !_isAndroid)
+        'iPhone: en la Biblioteca de apps, mantén pulsado el icono y elige «Añadir a la pantalla de inicio».',
+      if (_isAndroid || !_isIOS)
+        'Android: en la lista de apps, mantén pulsado el icono y elige «Añadir a Inicio» (o arrástralo a la pantalla).',
+    ];
     final speakerSteps = <String>[
       if (_isIOS || !_isAndroid)
         'iPhone: Ajustes → Accesibilidad → Tocar → Enrutamiento de audio de llamadas → Altavoz.',
@@ -79,6 +85,13 @@ class _PreparePhoneScreenState extends State<PreparePhoneScreen> {
               style: TextStyle(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 20),
+            _Section(
+              icon: Icons.home,
+              title: 'Ten la app a mano',
+              text:
+                  'Pon «Auxilio» en tu pantalla de inicio: en una emergencia la encontrarás al instante, sin buscarla.',
+              steps: homeScreenSteps,
+            ),
             _Section(
               icon: Icons.volume_up,
               title: 'Altavoz automático en las llamadas',

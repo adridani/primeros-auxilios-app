@@ -1,4 +1,4 @@
-package com.example.primeros_auxilios_app
+package com.adridani.primerosauxilios
 
 import io.flutter.embedding.android.FlutterActivity
 

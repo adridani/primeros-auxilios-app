@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Versión con esquinas redondeadas para Android antiguo (anterior a
+       la 8.0), que no recorta los iconos por sí mismo. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F0524A"/>
+      <stop offset="1" stop-color="#B71C1C"/>
+    </linearGradient>
+    <clipPath id="forma"><rect x="40" y="40" width="944" height="944" rx="208"/></clipPath>
+  </defs>
+  <g clip-path="url(#forma)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <g transform="translate(512 512) scale(1.2) translate(-512 -512)">
+      <path d="M512 770 C 330 655 250 560 250 450 C 250 355 322 290 405 290 C 457 290 492 318 512 352 C 532 318 567 290 619 290 C 702 290 774 355 774 450 C 774 560 694 655 512 770 Z" fill="#FFFFFF"/>
+      <polyline points="282,505 418,505 452,438 500,590 548,392 588,505 742,505" fill="none" stroke="#D32F2F" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
