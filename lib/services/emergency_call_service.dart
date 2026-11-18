@@ -69,7 +69,13 @@ class EmergencyCallService {
     final PermissionStatus status = await Permission.phone.request();
 
     if (!status.isGranted) {
-      return EmergencyCallResult.permissionDenied;
+      // Sin permiso no se puede llamar directamente, pero el marcador
+      // no necesita permiso: mejor dejar el número listo para pulsar
+      // que no hacer nada en plena emergencia.
+      final fallback = await _openDialerFallback();
+      return fallback == EmergencyCallResult.dialerOpened
+          ? EmergencyCallResult.dialerOpened
+          : EmergencyCallResult.permissionDenied;
     }
 
     try {
